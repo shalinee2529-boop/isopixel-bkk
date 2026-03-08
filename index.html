@@ -33,11 +33,11 @@
             Disc: () => <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>,
             Volume: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>,
             Bass: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="2"></circle><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"></path></svg>,
-            Download: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            Download: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>,
+            Shield: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
         };
 
         const App = () => {
-            // ตั้งชื่อไฟล์เป็นตัวเล็กสั้นๆ ตามที่คุณครูแจ้งไว้เลยค่ะ
             const [songs] = useState([
                 { id: 1, title: "1. Sodapop Hunter (ป.1)", file: "soda.mp3", color: "from-pink-500 to-purple-600" },
                 { id: 2, title: "2. สเต็ปจิ๋วไฟลุก (อ.3)", file: "step.mp3", color: "from-orange-500 to-red-600" },
@@ -48,9 +48,10 @@
             const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
             const [isPlaying, setIsPlaying] = useState(false);
             const [volume, setVolume] = useState(1);
-            const [bass, setBass] = useState(10);
+            const [bass, setBass] = useState(12);
             const [currentTime, setCurrentTime] = useState(0);
             const [duration, setDuration] = useState(0);
+            const [isProtected, setIsProtected] = useState(false);
 
             const audioRef = useRef(null);
             const audioContextRef = useRef(null);
@@ -65,13 +66,39 @@
                     audioContextRef.current = new AudioContext();
                     sourceRef.current = audioContextRef.current.createMediaElementSource(audioRef.current);
                     
+                    // --- ระบบกู้ชีพ (Anti-Distortion Pipeline) ---
+                    // 1. ลดความดังลงก่อนที่มันจะชนเพดานลำโพง (ลดลง 30%)
+                    const preGain = audioContextRef.current.createGain();
+                    preGain.gain.value = 0.7; 
+
+                    // 2. คอมเพรสเซอร์ (ตะครุบเสียงที่ล้นขอบให้มนลง ลดอาการเสียงแตก)
+                    const compressor = audioContextRef.current.createDynamicsCompressor();
+                    compressor.threshold.value = -12;
+                    compressor.knee.value = 40; 
+                    compressor.ratio.value = 12;
+                    compressor.attack.value = 0;
+                    compressor.release.value = 0.25;
+
+                    // 3. ลดเสียงแหลมที่บาดหู (ลดความซ่าของเสียงแตก)
+                    const trebleCut = audioContextRef.current.createBiquadFilter();
+                    trebleCut.type = "highshelf";
+                    trebleCut.frequency.value = 6000;
+                    trebleCut.gain.value = -5; // กดเสียงแหลมลง -5dB
+
+                    // 4. คงเบสไว้ให้กระหึ่มเหมือนเดิม
                     bassFilterRef.current = audioContextRef.current.createBiquadFilter();
                     bassFilterRef.current.type = "lowshelf";
                     bassFilterRef.current.frequency.value = 150; 
                     bassFilterRef.current.gain.value = bass;
 
-                    sourceRef.current.connect(bassFilterRef.current);
+                    // เชื่อมต่อสายสัญญาณทั้งหมด
+                    sourceRef.current.connect(preGain);
+                    preGain.connect(compressor);
+                    compressor.connect(trebleCut);
+                    trebleCut.connect(bassFilterRef.current);
                     bassFilterRef.current.connect(audioContextRef.current.destination);
+
+                    setIsProtected(true);
                 } catch (e) {
                     console.log("Audio Context fallback");
                 }
@@ -134,9 +161,16 @@
                         <div className={`absolute -top-20 -left-20 w-64 h-64 bg-blue-600 rounded-full mix-blend-multiply filter blur-[100px] opacity-40 transition-opacity duration-1000 ${isPlaying ? 'opacity-60' : 'opacity-20'}`}></div>
                         <div className={`absolute -bottom-20 -right-20 w-64 h-64 bg-purple-600 rounded-full mix-blend-multiply filter blur-[100px] opacity-40 transition-opacity duration-1000 ${isPlaying ? 'opacity-60' : 'opacity-20'}`}></div>
 
-                        <div className="text-center mb-10 relative z-10">
+                        <div className="text-center mb-8 relative z-10">
                             <h1 className="text-4xl font-bold text-white mb-2 drop-shadow-md">งานสายสัมพันธ์</h1>
-                            <p className="text-blue-300 text-xs font-semibold uppercase tracking-[0.2em]">14 มีนาคม 2026</p>
+                            <p className="text-blue-300 text-xs font-semibold uppercase tracking-[0.2em] mb-3">14 มีนาคม 2026</p>
+                            
+                            {/* ป้ายบอกสถานะการกู้ชีพเสียง */}
+                            <div className="flex justify-center">
+                                <span className={`flex items-center gap-1 text-[10px] font-bold px-3 py-1 rounded-full border ${isProtected ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300' : 'bg-gray-500/20 border-gray-500/50 text-gray-400'}`}>
+                                    <Icons.Shield /> {isProtected ? 'ระบบกรองเสียงแตก (ANTI-DISTORTION) ทำงานแล้ว' : 'กด PLAY เพื่อเปิดระบบกรองเสียง'}
+                                </span>
+                            </div>
                         </div>
 
                         <div className="flex flex-col items-center mb-10 relative z-10">
@@ -148,6 +182,10 @@
                                 </div>
                             </div>
                             <h2 className="text-2xl font-bold mt-8 tracking-wide text-center">{songs[currentTrackIndex].title}</h2>
+                            <div className="flex items-center gap-2 mt-2">
+                                <span className={`w-2 h-2 rounded-full ${isPlaying ? 'bg-green-500 animate-pulse' : 'bg-gray-500'}`}></span>
+                                <p className="text-blue-400 text-sm font-medium tracking-widest">BASS: {bass}dB</p>
+                            </div>
                         </div>
 
                         <audio 
@@ -202,7 +240,6 @@
                                         <span className={`font-semibold tracking-wide ${currentTrackIndex === index ? 'text-white' : 'text-gray-400'}`}>{song.title}</span>
                                     </div>
                                     
-                                    {/* ปุ่มดาวน์โหลดแบบตรง โหลดง่าย ไม่มี Error 100% */}
                                     <a 
                                         href={song.file}
                                         download={song.file}
@@ -219,7 +256,7 @@
                     </div>
                     
                     <div className="mt-8 text-center opacity-30">
-                        <p className="text-[10px] uppercase tracking-[0.3em]">Flash Drive Ready Edition • 2026</p>
+                        <p className="text-[10px] uppercase tracking-[0.3em]">Rescue Edition (Anti-Distortion) • 2026</p>
                     </div>
                 </div>
             );
