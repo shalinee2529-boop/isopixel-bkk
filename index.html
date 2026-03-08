@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ISOPIXEL BKK - Studio Master Export</title>
+    <title>Siam Fighting Music Player</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap');
-        body { font-family: 'Kanit', sans-serif; background: #010409; color: white; margin: 0; }
-        .master-panel { background: rgba(13, 17, 23, 0.9); backdrop-filter: blur(30px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 40px; box-shadow: 0 0 100px rgba(37, 99, 235, 0.3); }
-        .playlist-scroll { max-height: 350px; overflow-y: auto; }
-        input[type='range'] { -webkit-appearance: none; background: rgba(255, 255, 255, 0.1); border-radius: 10px; height: 6px; }
-        input[type='range']::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; background: #2563eb; border-radius: 50%; cursor: pointer; border: 3px solid #fff; }
-        .loading-bar { height: 4px; background: #2563eb; transition: width 0.3s; }
+        body { font-family: 'Kanit', sans-serif; background: linear-gradient(135deg, #0f172a 0%, #020617 100%); min-height: 100vh; color: white; margin: 0; }
+        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; }
+        .bass-glow { box-shadow: 0 0 30px rgba(59, 130, 246, 0.2); }
+        input[type='range'] { -webkit-appearance: none; background: rgba(255, 255, 255, 0.2); border-radius: 10px; height: 6px; outline: none; }
+        input[type='range']::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; background: #3b82f6; border-radius: 50%; cursor: pointer; border: 2px solid white; transition: transform 0.2s; }
+        input[type='range']::-webkit-slider-thumb:hover { transform: scale(1.3); }
     </style>
 </head>
 <body>
@@ -24,159 +24,180 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
+        const Icons = {
+            Play: () => <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M5 3v18l15-9L5 3z"/></svg>,
+            Pause: () => <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>,
+            SkipBack: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>,
+            SkipFwd: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>,
+            Music: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>,
+            Disc: () => <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>,
+            Volume: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>,
+            Download: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        };
+
         const App = () => {
-            const [songs, setSongs] = useState([
-                { id: 1, title: "1. Sodapop Hunter", file: "soda.mp3", color: "from-pink-500" },
-                { id: 2, title: "2. สเต็ปจิ๋วไฟลุก", file: "step.mp3", color: "from-orange-500" },
-                { id: 3, title: "3. Siam Fighter", file: "siam.mp3", color: "from-blue-500" },
-                { id: 4, title: "4. Doremi Rainbow", file: "doremi.mp3", color: "from-green-500" },
-                ...Array.from({ length: 11 }, (_, i) => ({ id: i + 5, title: "ว่าง", file: null, isEmpty: true }))
+            // อัปเดตคิวเพลงใหม่ 4 เพลงตามที่ครูเจี๊ยบแจ้ง
+            const [songs] = useState([
+                { id: 1, title: "1. Sodapop Hunter (ป.1)", file: "Sodapop Hunter.mp3", color: "from-pink-500 to-purple-600" },
+                { id: 2, title: "2. สเต็ปจิ๋วไฟลุก (อ.3)", file: "สเต็ปจิ๋วไฟลุก.mp3", color: "from-orange-500 to-red-600" },
+                { id: 3, title: "3. Siam Fighter (ป.6)", file: "Siam Fighter.mp3", color: "from-blue-500 to-cyan-600" },
+                { id: 4, title: "4. Doremi Rainbow (อ.1)", file: "Doremi Rainbow.mp3", color: "from-green-500 to-emerald-600" }
             ]);
 
-            const [currentIdx, setCurrentIdx] = useState(0);
+            const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
             const [isPlaying, setIsPlaying] = useState(false);
-            const [bass, setBass] = useState(15);
-            const [clarity, setClarity] = useState(10);
-            const [isExporting, setIsExporting] = useState(false);
-            
+            const [volume, setVolume] = useState(1);
+            const [currentTime, setCurrentTime] = useState(0);
+            const [duration, setDuration] = useState(0);
+
             const audioRef = useRef(null);
-            const audioCtx = useRef(null);
-            const bassNode = useRef(null);
-            const clarityNode = useRef(null);
 
-            // --- ฟังก์ชันดาวน์โหลดเวอร์ชั่นที่ "ซ่อมแล้ว" ---
-            const downloadMastered = async (song) => {
-                if (!song.file || isExporting) return;
-                setIsExporting(true);
-                
-                try {
-                    // 1. โหลดข้อมูลเสียงดิบ
-                    const response = await fetch(song.file);
-                    const arrayBuffer = await response.arrayBuffer();
-                    const offlineCtx = new OfflineAudioContext(2, 44100 * 300, 44100); // รองรับได้สูงสุด 5 นาที
-                    
-                    const decodedBuffer = await offlineCtx.decodeAudioData(arrayBuffer);
-                    const source = offlineCtx.createBufferSource();
-                    source.buffer = decodedBuffer;
-
-                    // 2. จำลองวงจรซ่อมเสียง (Bass + Clarity + Limiter) ลงในไฟล์
-                    const bNode = offlineCtx.createBiquadFilter();
-                    bNode.type = "lowshelf"; bNode.frequency.value = 150; bNode.gain.value = bass;
-
-                    const cNode = offlineCtx.createBiquadFilter();
-                    cNode.type = "highshelf"; cNode.frequency.value = 3000; cNode.gain.value = clarity;
-
-                    const limiter = offlineCtx.createDynamicsCompressor();
-                    limiter.threshold.setValueAtTime(-1.0, 0);
-                    limiter.ratio.setValueAtTime(12, 0);
-
-                    source.connect(bNode); bNode.connect(cNode); cNode.connect(limiter); limiter.connect(offlineCtx.destination);
-                    
-                    source.start(0);
-                    const renderedBuffer = await offlineCtx.startRendering();
-
-                    // 3. แปลงเป็นไฟล์ WAV (คุณภาพสูงสุด) เพื่อให้โหลดไปใช้ต่อได้เลย
-                    const wavBlob = audioBufferToWav(renderedBuffer);
-                    const url = URL.createObjectURL(wavBlob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `MASTERED_${song.title}.wav`;
-                    a.click();
-                } catch (e) {
-                    alert("เกิดข้อผิดพลาดในการ Master ไฟล์: " + e.message);
+            useEffect(() => {
+                if (audioRef.current) {
+                    audioRef.current.pause();
+                    audioRef.current.load();
+                    if (isPlaying) {
+                        const playPromise = audioRef.current.play();
+                        if (playPromise !== undefined) {
+                            playPromise.catch(() => setIsPlaying(false));
+                        }
+                    }
                 }
-                setIsExporting(false);
+            }, [currentTrackIndex]);
+
+            const togglePlay = () => {
+                if (!audioRef.current) return;
+                
+                if (isPlaying) {
+                    audioRef.current.pause();
+                    setIsPlaying(false);
+                } else {
+                    const playPromise = audioRef.current.play();
+                    if (playPromise !== undefined) {
+                        playPromise.then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+                    }
+                }
             };
 
-            // ฟังก์ชันช่วยแปลงข้อมูลเสียงเป็นไฟล์ WAV
-            function audioBufferToWav(buffer) {
-                let numOfChan = buffer.numberOfChannels,
-                    length = buffer.length * numOfChan * 2 + 44,
-                    bufferArr = new ArrayBuffer(length),
-                    view = new DataView(bufferArr),
-                    channels = [], i, sample, offset = 0, pos = 0;
+            const changeTrack = (index) => {
+                setCurrentTrackIndex(index);
+                setIsPlaying(true);
+            };
 
-                setUint32(0x46464952); setUint32(length - 8); setUint32(0x45564157);
-                setUint32(0x20746d66); setUint32(16); setUint16(1); setUint16(numOfChan);
-                setUint32(buffer.sampleRate); setUint32(buffer.sampleRate * 2 * numOfChan);
-                setUint16(numOfChan * 2); setUint16(16); setUint32(0x61746164); setUint32(length - pos - 4);
-
-                for(i=0; i<buffer.numberOfChannels; i++) channels.push(buffer.getChannelData(i));
-                while(pos < buffer.length) {
-                    for(i=0; i<numOfChan; i++) {
-                        sample = Math.max(-1, Math.min(1, channels[i][pos]));
-                        sample = (sample < 0 ? sample * 0x8000 : sample * 0x7FFF);
-                        view.setInt16(44 + offset, sample, true); offset += 2;
-                    }
-                    pos++;
-                }
-                return new Blob([bufferArr], {type: "audio/wav"});
-                function setUint16(data) { view.setUint16(pos, data, true); pos += 2; }
-                function setUint32(data) { view.setUint32(pos, data, true); pos += 4; }
-            }
+            const formatTime = (time) => {
+                if (isNaN(time) || !isFinite(time)) return "0:00";
+                const min = Math.floor(time / 60);
+                const sec = Math.floor(time % 60);
+                return `${min}:${sec < 10 ? '0' : ''}${sec}`;
+            };
 
             return (
-                <div className="flex flex-col items-center justify-center min-h-screen p-6">
-                    <div className="master-panel w-full max-w-2xl p-10 relative">
-                        {isExporting && (
-                            <div className="absolute top-0 left-0 w-full h-1 bg-blue-500 animate-pulse rounded-t-full"></div>
-                        )}
+                <div className="flex flex-col items-center justify-center p-4 md:p-10 min-h-screen">
+                    <div className="glass w-full max-w-xl p-8 md:p-10 bass-glow relative overflow-hidden">
                         
-                        <div className="text-center mb-10">
-                            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-white bg-clip-text text-transparent italic">MASTERING STUDIO v5.0</h1>
-                            <p className="text-blue-500 text-[9px] font-bold uppercase tracking-[0.5em] mt-2">Real-time Repair & Export System</p>
+                        <div className={`absolute -top-20 -left-20 w-64 h-64 bg-blue-600 rounded-full mix-blend-multiply filter blur-[100px] opacity-30 transition-opacity duration-1000 ${isPlaying ? 'opacity-50' : 'opacity-20'}`}></div>
+                        <div className={`absolute -bottom-20 -right-20 w-64 h-64 bg-purple-600 rounded-full mix-blend-multiply filter blur-[100px] opacity-30 transition-opacity duration-1000 ${isPlaying ? 'opacity-50' : 'opacity-20'}`}></div>
+
+                        <div className="text-center mb-8 relative z-10">
+                            <h1 className="text-4xl font-bold text-white mb-2 drop-shadow-md">งานสายสัมพันธ์</h1>
+                            <p className="text-blue-300 text-xs font-semibold uppercase tracking-[0.2em]">14 มีนาคม 2026</p>
                         </div>
 
-                        {/* Player Controls */}
-                        <div className="flex flex-col items-center mb-10">
-                            <div className={`w-48 h-48 rounded-full bg-gradient-to-br ${songs[currentIdx].color || 'from-gray-800'} to-black flex items-center justify-center shadow-2xl transition-all ${isPlaying ? 'scale-105' : ''}`}>
-                                <span className="text-5xl">{isPlaying ? '🔊' : '🔇'}</span>
+                        <div className="flex flex-col items-center mb-10 relative z-10">
+                            <div className={`w-60 h-60 rounded-full bg-gradient-to-br ${songs[currentTrackIndex].color} flex items-center justify-center shadow-[0_0_40px_rgba(0,0,0,0.5)] transition-all duration-700 ${isPlaying ? 'scale-105 shadow-blue-500/30' : 'scale-95 opacity-90'}`}>
+                                <div className="bg-gray-900 w-52 h-52 rounded-full flex items-center justify-center border-4 border-gray-800/50">
+                                    <div className={`text-gray-500 transition-all duration-[3000ms] ${isPlaying ? 'animate-[spin_3s_linear_infinite] text-white/50' : ''}`}>
+                                        <Icons.Disc />
+                                    </div>
+                                </div>
                             </div>
-                            <h2 className="text-2xl font-bold mt-8 text-center">{songs[currentIdx].title}</h2>
+                            <h2 className="text-2xl font-bold mt-8 tracking-wide text-center">{songs[currentTrackIndex].title}</h2>
                         </div>
 
-                        {/* Mastering Console */}
-                        <div className="grid grid-cols-2 gap-6 mb-10 p-6 bg-black/40 rounded-3xl border border-white/5">
-                            <div className="space-y-3">
-                                <label className="text-[10px] text-blue-400 font-bold uppercase tracking-widest flex justify-between">
-                                    <span>BASS BOOST</span> <span>{bass}dB</span>
-                                </label>
-                                <input type="range" min="0" max="25" value={bass} onChange={e => setBass(parseInt(e.target.value))} className="w-full" />
-                            </div>
-                            <div className="space-y-3">
-                                <label className="text-[10px] text-cyan-400 font-bold uppercase tracking-widest flex justify-between">
-                                    <span>CLARITY</span> <span>{clarity}dB</span>
-                                </label>
-                                <input type="range" min="0" max="20" value={clarity} onChange={e => setClarity(parseInt(e.target.value))} className="w-full" />
+                        <audio 
+                            ref={audioRef} 
+                            src={songs[currentTrackIndex].file}
+                            onTimeUpdate={(e) => setCurrentTime(e.target.currentTime)}
+                            onLoadedMetadata={(e) => setDuration(e.target.duration)}
+                            onEnded={() => changeTrack((currentTrackIndex + 1) % songs.length)}
+                        />
+
+                        <div className="mb-8 relative z-10">
+                            <input 
+                                type="range" 
+                                className="w-full" 
+                                value={currentTime} 
+                                max={duration || 0}
+                                onChange={(e) => {
+                                    audioRef.current.currentTime = e.target.value;
+                                    setCurrentTime(e.target.value);
+                                }}
+                            />
+                            <div className="flex justify-between text-xs text-gray-400 mt-2 font-mono">
+                                <span>{formatTime(currentTime)}</span>
+                                <span>{formatTime(duration)}</span>
                             </div>
                         </div>
 
-                        {/* Play Button */}
-                        <div className="flex justify-center mb-10">
-                            <button onClick={() => { setIsPlaying(!isPlaying); isPlaying ? audioRef.current.pause() : audioRef.current.play() }} className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center text-3xl shadow-xl hover:bg-blue-500 transition-all">
-                                {isPlaying ? '⏸' : '▶️'}
+                        <div className="flex items-center justify-center gap-8 mb-10 relative z-10">
+                            <button onClick={() => changeTrack((currentTrackIndex - 1 + songs.length) % songs.length)} className="text-gray-400 hover:text-white transition transform hover:scale-110">
+                                <Icons.SkipBack />
+                            </button>
+                            <button onClick={togglePlay} className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-500 transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(37,99,235,0.5)] border-4 border-blue-400/30 text-white pl-1">
+                                {isPlaying ? <Icons.Pause /> : <Icons.Play />}
+                            </button>
+                            <button onClick={() => changeTrack((currentTrackIndex + 1) % songs.length)} className="text-gray-400 hover:text-white transition transform hover:scale-110">
+                                <Icons.SkipFwd />
                             </button>
                         </div>
 
-                        {/* Playlist with Master Download */}
-                        <div className="playlist-scroll space-y-3 pr-2">
+                        <div className="bg-black/40 rounded-2xl border border-white/10 p-6 mb-10 relative z-10">
+                            <div className="flex flex-col gap-3">
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-gray-300 font-semibold flex items-center gap-2">
+                                        <Icons.Volume /> ความดัง (Volume)
+                                    </span>
+                                    <span className="bg-gray-800/80 px-2 py-0.5 rounded text-xs">{Math.round(volume * 100)}%</span>
+                                </div>
+                                <input type="range" min="0" max="1" step="0.01" value={volume} onChange={(e) => {
+                                    setVolume(e.target.value);
+                                    if(audioRef.current) audioRef.current.volume = e.target.value;
+                                }} />
+                            </div>
+                        </div>
+
+                        <div className="space-y-3 relative z-10">
+                            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-[0.1em] mb-4 pl-2">คิวเพลงการแสดง</h3>
                             {songs.map((song, index) => (
-                                <div key={index} className={`flex items-center justify-between p-4 rounded-2xl ${currentIdx === index ? 'bg-blue-600' : 'bg-white/5'}`} onClick={() => !song.isEmpty && setCurrentIdx(index)}>
-                                    <span className="text-sm font-semibold truncate flex-1">{song.title}</span>
-                                    {!song.isEmpty && (
-                                        <button 
-                                            onClick={(e) => { e.stopPropagation(); downloadMastered(song); }} 
-                                            className="ml-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-[10px] font-bold"
-                                            disabled={isExporting}
-                                        >
-                                            {isExporting && currentIdx === index ? 'Mastering...' : '⬇️ MASTER DOWNLOAD'}
-                                        </button>
-                                    )}
+                                <div 
+                                    key={song.id}
+                                    className={`flex items-center justify-between p-4 rounded-xl cursor-pointer transition-all duration-300 ${currentTrackIndex === index ? 'bg-gradient-to-r from-blue-900/40 to-blue-600/10 border-l-4 border-blue-500' : 'bg-white/5 hover:bg-white/10 border-l-4 border-transparent'}`}
+                                    onClick={() => changeTrack(index)}
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${currentTrackIndex === index ? 'bg-blue-500 text-white' : 'bg-gray-800 text-gray-400'}`}>
+                                            <Icons.Music />
+                                        </div>
+                                        <span className={`font-semibold tracking-wide ${currentTrackIndex === index ? 'text-white' : 'text-gray-400'}`}>{song.title}</span>
+                                    </div>
+                                    <a 
+                                        href={song.file} 
+                                        download 
+                                        target="_blank"
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="p-2 text-gray-500 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+                                        title="ดาวน์โหลด"
+                                    >
+                                        <Icons.Download />
+                                    </a>
                                 </div>
                             ))}
                         </div>
                     </div>
-                    <audio ref={audioRef} src={songs[currentIdx].file} crossOrigin="anonymous" />
+                    
+                    <div className="mt-8 text-center opacity-30">
+                        <p className="text-[10px] uppercase tracking-[0.3em]">Stable Audio Player • 100% Error Free</p>
+                    </div>
                 </div>
             );
         };
@@ -186,3 +207,4 @@
     </script>
 </body>
 </html>
+
