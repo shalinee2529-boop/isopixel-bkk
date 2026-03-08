@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ISOPIXEL BKK - Master Pro Player</title>
+    <title>ISOPIXEL BKK - Master Music Player</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -11,12 +11,12 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap');
         body { font-family: 'Kanit', sans-serif; background: #020617; color: white; margin: 0; }
-        .master-panel { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 35px; box-shadow: 0 0 60px rgba(37, 99, 235, 0.2); }
+        .master-panel { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 40px; box-shadow: 0 0 60px rgba(37,99,235,0.2); }
         .playlist-scroll { max-height: 400px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #2563eb transparent; }
         input[type='range'] { -webkit-appearance: none; background: rgba(255, 255, 255, 0.1); border-radius: 10px; height: 6px; outline: none; }
-        input[type='range']::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; background: #2563eb; border-radius: 50%; cursor: pointer; border: 2px solid white; }
-        @keyframes disc-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .is-playing { animation: disc-spin 4s linear infinite; }
+        input[type='range']::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; background: #2563eb; border-radius: 50%; cursor: pointer; border: 3px solid white; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .is-playing { animation: spin 5s linear infinite; }
     </style>
 </head>
 <body>
@@ -25,24 +25,23 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // --- ชุดไอคอนแบบ Professional ---
         const Icons = {
-            Play: () => <svg width="32" height="32" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>,
-            Pause: () => <svg width="32" height="32" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>,
-            Download: () => <svg width="22" height="22" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>,
-            Delete: () => <svg width="20" height="20" fill="none" stroke="#ff4d4d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/></svg>,
+            Play: () => <svg width="36" height="36" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>,
+            Pause: () => <svg width="36" height="36" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>,
+            Download: () => <svg width="20" height="20" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>,
+            Delete: () => <svg width="20" height="20" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M10 11v6M14 11v6"/></svg>,
             Upload: () => <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
         };
 
         const App = () => {
-            const emptySlot = (id) => ({ id, title: "ว่าง (รอกำหนดเพลง)", file: null, isEmpty: true });
+            const emptySong = (id) => ({ id, title: "รอกำหนดเพลง...", file: null, isEmpty: true });
             
             const [songs, setSongs] = useState([
-                { id: 1, title: "1. Sodapop Hunter", file: "soda.mp3", color: "from-pink-500" },
-                { id: 2, title: "2. สเต็ปจิ๋วไฟลุก", file: "step.mp3", color: "from-orange-500" },
-                { id: 3, title: "3. Siam Fighter", file: "siam.mp3", color: "from-blue-500" },
-                { id: 4, title: "4. Doremi Rainbow", file: "doremi.mp3", color: "from-green-500" },
-                ...Array.from({ length: 11 }, (_, i) => emptySlot(i + 5))
+                { id: 1, title: "1. Sodapop Hunter", file: "soda.mp3", color: "from-pink-600" },
+                { id: 2, title: "2. สเต็ปจิ๋วไฟลุก", file: "step.mp3", color: "from-orange-600" },
+                { id: 3, title: "3. Siam Fighter", file: "siam.mp3", color: "from-blue-600" },
+                { id: 4, title: "4. Doremi Rainbow", file: "doremi.mp3", color: "from-green-600" },
+                ...Array.from({ length: 11 }, (_, i) => emptySong(i + 5))
             ]);
 
             const [currentIdx, setCurrentIdx] = useState(0);
@@ -66,7 +65,7 @@
                     bassNode.current.gain.value = bass;
                     source.connect(bassNode.current);
                     bassNode.current.connect(audioCtx.current.destination);
-                } catch (e) { console.warn("Bass Engine Error"); }
+                } catch (e) { console.warn("Audio Engine Fallback"); }
             };
 
             useEffect(() => { if (bassNode.current) bassNode.current.gain.value = bass; }, [bass]);
@@ -82,7 +81,7 @@
                             title: files[fileIdx].name.replace('.mp3', ''), 
                             file: URL.createObjectURL(files[fileIdx]), 
                             isEmpty: false,
-                            color: "from-blue-600"
+                            color: "from-blue-500"
                         };
                         fileIdx++;
                     }
@@ -92,7 +91,7 @@
 
             const removeSong = (id, e) => {
                 e.stopPropagation();
-                setSongs(songs.map(s => s.id === id ? emptySlot(id) : s));
+                setSongs(songs.map(s => s.id === id ? emptySong(id) : s));
                 if (currentIdx === id - 1) setIsPlaying(false);
             };
 
@@ -106,27 +105,27 @@
 
             return (
                 <div className="flex flex-col items-center justify-center min-h-screen p-6">
-                    <div className="master-panel w-full max-w-xl p-8 md:p-10">
-                        <div className="text-center mb-8">
-                            <h1 className="text-3xl font-bold">ISOPIXEL MASTER</h1>
-                            <p className="text-blue-500 text-[10px] uppercase tracking-[0.4em] font-bold">PRO AUDIO SYSTEM</p>
+                    <div className="master-panel w-full max-w-2xl p-10">
+                        <div className="text-center mb-10">
+                            <h1 className="text-4xl font-bold">ISOPIXEL MASTER</h1>
+                            <p className="text-blue-500 text-xs font-bold uppercase tracking-[0.5em] mt-2">Professional Music Engine</p>
                         </div>
 
                         {/* Professional Visualizer */}
                         <div className="flex flex-col items-center mb-10">
-                            <div className={`w-48 h-48 rounded-full bg-gradient-to-br ${songs[currentIdx].color || 'from-gray-800'} to-black p-1 shadow-2xl transition-all duration-700 ${isPlaying ? 'scale-105 ring-4 ring-blue-500/20' : ''}`}>
-                                <div className={`w-full h-full rounded-full border-2 border-white/10 flex items-center justify-center ${isPlaying ? 'is-playing' : ''}`}>
-                                    <div className="w-12 h-12 bg-black/40 rounded-full border border-white/20"></div>
+                            <div className={`w-52 h-52 rounded-full bg-gradient-to-br ${songs[currentIdx].color || 'from-gray-800'} to-black flex items-center justify-center shadow-2xl transition-all duration-700 ${isPlaying ? 'scale-110 ring-8 ring-blue-500/10' : ''}`}>
+                                <div className={`w-44 h-44 rounded-full border-2 border-white/10 flex items-center justify-center ${isPlaying ? 'is-playing' : ''}`}>
+                                    <div className="w-10 h-10 bg-black/50 rounded-full border border-white/20"></div>
                                 </div>
                             </div>
-                            <h2 className="text-2xl font-bold mt-8 truncate max-w-xs">{songs[currentIdx].title}</h2>
+                            <h2 className="text-2xl font-bold mt-10 truncate max-w-md">{songs[currentIdx].title}</h2>
                         </div>
 
-                        {/* Mixer Control (Bass/Volume) */}
-                        <div className="grid grid-cols-2 gap-6 mb-8 p-5 bg-white/5 rounded-2xl border border-white/10">
+                        {/* Mixer Control */}
+                        <div className="grid grid-cols-2 gap-8 mb-10 p-6 bg-white/5 rounded-3xl border border-white/10">
                             <div className="space-y-2">
                                 <label className="text-[10px] text-blue-400 font-bold uppercase flex justify-between">
-                                    <span>Bass Boost</span> <span>{bass}dB</span>
+                                    <span>Bass Booster</span> <span>{bass}dB</span>
                                 </label>
                                 <input type="range" min="0" max="25" value={bass} onChange={e => setBass(parseInt(e.target.value))} className="w-full" />
                             </div>
@@ -142,36 +141,42 @@
                         </div>
 
                         {/* Playback Controls */}
-                        <div className="flex justify-center items-center gap-10 mb-8">
-                            <button onClick={togglePlay} className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center shadow-xl hover:bg-blue-500 active:scale-90 transition-all">
+                        <div className="flex justify-center items-center gap-10 mb-10">
+                            <button onClick={() => setCurrentIdx((currentIdx - 1 + 15) % 15)} className="text-gray-400 hover:text-white">
+                                <svg width="30" height="30" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                            </button>
+                            <button onClick={togglePlay} className="w-24 h-24 bg-blue-600 rounded-full flex items-center justify-center shadow-2xl hover:bg-blue-500 transition-all active:scale-90">
                                 {isPlaying ? <Icons.Pause /> : <Icons.Play />}
+                            </button>
+                            <button onClick={() => setCurrentIdx((currentIdx + 1) % 15)} className="text-gray-400 hover:text-white">
+                                <svg width="30" height="30" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
                             </button>
                         </div>
 
                         {/* Upload Zone */}
-                        <label className="flex items-center justify-center gap-3 w-full py-4 mb-8 bg-blue-600/5 border-2 border-dashed border-blue-500/20 rounded-2xl cursor-pointer hover:bg-blue-600/10 transition-all group">
+                        <label className="flex items-center justify-center gap-3 w-full py-5 mb-10 bg-blue-600/5 border-2 border-dashed border-blue-500/30 rounded-3xl cursor-pointer hover:bg-blue-600/15 transition-all group">
                             <Icons.Upload />
-                            <span className="text-sm font-bold text-blue-300">คลิกเพื่อเพิ่มเพลง (รองรับ 15 เพลง)</span>
+                            <span className="text-sm font-bold text-blue-300">คลิกเพื่อเพิ่มเพลงเข้าคิว (รองรับ 15 เพลง)</span>
                             <input type="file" multiple accept="audio/mp3" className="hidden" onChange={handleUpload} />
                         </label>
 
                         {/* Playlist with Download & Delete buttons */}
-                        <div className="playlist-scroll space-y-2 pr-2">
+                        <div className="playlist-scroll space-y-3 pr-2">
                             {songs.map((song, index) => (
                                 <div key={index} 
-                                     className={`flex items-center justify-between p-4 rounded-xl cursor-pointer transition-all ${currentIdx === index ? 'bg-blue-600 text-white' : 'bg-white/5 hover:bg-white/10'}`}
+                                     className={`flex items-center justify-between p-5 rounded-2xl cursor-pointer transition-all ${currentIdx === index ? 'bg-blue-600 shadow-xl' : 'bg-white/5 hover:bg-white/10'}`}
                                      onClick={() => !song.isEmpty && setCurrentIdx(index)}>
-                                    <div className="flex items-center gap-4 flex-1 truncate">
+                                    <div className="flex items-center gap-5 flex-1 truncate">
                                         <span className="text-[10px] font-bold opacity-30">{index + 1}</span>
                                         <span className={`text-sm font-semibold truncate ${song.isEmpty ? 'text-gray-600 italic' : ''}`}>{song.title}</span>
                                     </div>
                                     {!song.isEmpty && (
-                                        <div className="flex items-center gap-2">
-                                            {/* ปุ่มดาวน์โหลด (ลูกศรลง) */}
+                                        <div className="flex items-center gap-3">
+                                            {/* ปุ่มดาวน์โหลด */}
                                             <a href={song.file} download={`${song.title}.mp3`} onClick={e => e.stopPropagation()} className="p-2 hover:bg-black/20 rounded-full transition-all" title="ดาวน์โหลด">
                                                 <Icons.Download />
                                             </a>
-                                            {/* ปุ่มลบ (ถังขยะ) */}
+                                            {/* ปุ่มลบ */}
                                             <button onClick={(e) => removeSong(song.id, e)} className="p-2 hover:bg-red-500/20 rounded-full transition-all" title="ลบเพลง">
                                                 <Icons.Delete />
                                             </button>
@@ -182,7 +187,7 @@
                         </div>
                     </div>
                     <audio ref={audioRef} src={songs[currentIdx].file} onEnded={() => setCurrentIdx((currentIdx + 1) % 15)} />
-                    <p className="mt-10 text-[9px] opacity-20 tracking-[0.5em] uppercase">ISOPIXEL Stable v3.1 Master Core</p>
+                    <footer className="mt-12 opacity-20 text-[10px] uppercase tracking-[0.5em]">ISOPIXEL MASTER CORE v3.0 • BY GEMINI AI</footer>
                 </div>
             );
         };
@@ -192,5 +197,3 @@
     </script>
 </body>
 </html>
-
-
