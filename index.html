@@ -3,130 +3,217 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ISOPIXEL BKK - PRO PLAYER</title>
+    <title>ISOPIXEL BKK - Master Music Player</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap');
-        body { font-family: 'Kanit', sans-serif; background: #020617; color: white; margin: 0; }
-        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 30px; }
-        .bass-glow { box-shadow: 0 0 50px rgba(59, 130, 246, 0.15); }
+        body { font-family: 'Kanit', sans-serif; background: #020617; color: white; margin: 0; overflow-x: hidden; }
+        .glass-morphed { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 40px; }
+        .master-glow { box-shadow: 0 0 60px rgba(37, 99, 235, 0.2); }
+        .playlist-scroll { max-height: 420px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #2563eb transparent; }
+        input[type='range'] { -webkit-appearance: none; background: rgba(255, 255, 255, 0.1); border-radius: 10px; height: 6px; outline: none; }
+        input[type='range']::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; background: #2563eb; border-radius: 50%; cursor: pointer; border: 3px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+        .rotating { animation: rotate 5s linear infinite; }
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
-    <div id="root">
-        <div style="padding: 50px; text-align: center;">
-            <h2>กำลังเริ่มระบบเครื่องเล่นเพลง...</h2>
-            <p>หากหน้าจอนี้ไม่หายไปภายใน 5 วินาที กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตค่ะ</p>
-        </div>
-    </div>
+    <div id="root"></div>
 
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        const App = () => {
-            // แก้ไขชื่อไฟล์ให้ตรงกับ "ชื่อไฟล์จริงในเครื่อง" ของครูเจี๊ยบเป๊ะๆ นะคะ
-            const [songs, setSongs] = useState([
-                { id: 1, title: "1. Sodapop Hunter", file: "soda.mp3", color: "from-pink-600 to-purple-800" },
-                { id: 2, title: "2. สเต็ปจิ๋วไฟลุก", file: "step.mp3", color: "from-orange-600 to-red-800" },
-                { id: 3, title: "3. Siam Fighter", file: "siam.mp3", color: "from-blue-600 to-cyan-800" },
-                { id: 4, title: "4. Doremi Rainbow", file: "doremi.mp3", color: "from-green-600 to-emerald-800" },
-                ...Array.from({ length: 11 }, (_, i) => ({
-                    id: i + 5, title: `${i + 5}. รอกำหนดเพลง...`, file: "#", color: "from-gray-700 to-gray-900", isEmpty: true
-                }))
-            ]);
+        const Icons = {
+            Play: () => <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>,
+            Pause: () => <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>,
+            Prev: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>,
+            Next: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>,
+            Download: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>,
+            Delete: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>,
+            Upload: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+        };
 
-            const [currentTrack, setCurrentTrack] = useState(0);
+        const App = () => {
+            const initialSongs = [
+                { id: 1, title: "Sodapop Hunter", file: "soda.mp3", color: "from-pink-500 to-purple-700" },
+                { id: 2, title: "สเต็ปจิ๋วไฟลุก", file: "step.mp3", color: "from-orange-500 to-red-700" },
+                { id: 3, title: "Siam Fighter", file: "siam.mp3", color: "from-blue-500 to-indigo-700" },
+                { id: 4, title: "Doremi Rainbow", file: "doremi.mp3", color: "from-green-500 to-teal-700" },
+                ...Array.from({ length: 11 }, (_, i) => ({ id: i + 5, title: "ว่าง", file: null, color: "from-gray-700 to-gray-900", isEmpty: true }))
+            ];
+
+            const [songs, setSongs] = useState(initialSongs);
+            const [currentIndex, setCurrentIndex] = useState(0);
             const [isPlaying, setIsPlaying] = useState(false);
             const [bass, setBass] = useState(15);
+            const [volume, setVolume] = useState(1);
+            
             const audioRef = useRef(null);
             const audioCtx = useRef(null);
-            const bassFilter = useRef(null);
+            const bassNode = useRef(null);
 
-            // ฟังก์ชันตั้งค่าเสียงเบส
-            const initAudio = () => {
+            const setupAudio = () => {
                 if (audioCtx.current) return;
                 try {
                     const Context = window.AudioContext || window.webkitAudioContext;
                     audioCtx.current = new Context();
                     const source = audioCtx.current.createMediaElementSource(audioRef.current);
-                    bassFilter.current = audioCtx.current.createBiquadFilter();
-                    bassFilter.current.type = "lowshelf";
-                    bassFilter.current.frequency.value = 150;
-                    bassFilter.current.gain.value = bass;
-                    source.connect(bassFilter.current);
-                    bassFilter.current.connect(audioCtx.current.destination);
+                    bassNode.current = audioCtx.current.createBiquadFilter();
+                    bassNode.current.type = "lowshelf";
+                    bassNode.current.frequency.value = 150;
+                    bassNode.current.gain.value = bass;
+                    source.connect(bassNode.current);
+                    bassNode.current.connect(audioCtx.current.destination);
                 } catch (e) { console.error("Audio Engine Error"); }
             };
 
+            useEffect(() => {
+                if (bassNode.current) bassNode.current.gain.value = bass;
+            }, [bass]);
+
+            useEffect(() => {
+                if (audioRef.current) {
+                    audioRef.current.load();
+                    if (isPlaying && songs[currentIndex].file) {
+                        audioRef.current.play().catch(() => setIsPlaying(false));
+                    }
+                }
+            }, [currentIndex]);
+
             const togglePlay = () => {
-                initAudio();
+                if (!songs[currentIndex].file) return;
+                setupAudio();
                 if (audioCtx.current?.state === 'suspended') audioCtx.current.resume();
                 if (isPlaying) audioRef.current.pause();
-                else audioRef.current.play().catch(e => alert("หาไฟล์เพลงไม่เจอค่ะ! เช็คชื่อไฟล์อีกทีนะคะ"));
+                else audioRef.current.play();
                 setIsPlaying(!isPlaying);
             };
 
             const handleUpload = (e) => {
                 const files = Array.from(e.target.files);
-                const newSongs = [...songs];
-                const firstEmpty = newSongs.findIndex(s => s.isEmpty);
-                files.forEach((f, i) => {
-                    if (firstEmpty + i < 15) {
-                        newSongs[firstEmpty + i] = {
-                            id: firstEmpty + i + 1,
-                            title: `${firstEmpty + i + 1}. ${f.name.replace('.mp3','')}`,
-                            file: URL.createObjectURL(f),
-                            color: "from-blue-500 to-indigo-900"
+                const updatedSongs = [...songs];
+                let fileIdx = 0;
+                
+                for (let i = 0; i < updatedSongs.length && fileIdx < files.length; i++) {
+                    if (updatedSongs[i].isEmpty) {
+                        updatedSongs[i] = {
+                            id: i + 1,
+                            title: files[fileIdx].name.replace('.mp3', ''),
+                            file: URL.createObjectURL(files[fileIdx]),
+                            color: "from-blue-600 to-blue-900",
+                            isEmpty: false,
+                            isLocal: true
                         };
+                        fileIdx++;
                     }
-                });
-                setSongs(newSongs);
+                }
+                setSongs(updatedSongs);
+            };
+
+            const removeSong = (id, e) => {
+                e.stopPropagation();
+                const updatedSongs = songs.map(s => s.id === id ? { ...initialSongs[id-1], isEmpty: true } : s);
+                setSongs(updatedSongs);
+                if (currentIndex === id - 1) setIsPlaying(false);
             };
 
             return (
-                <div className="flex flex-col items-center justify-center min-h-screen p-4">
-                    <div className="glass w-full max-w-xl p-8 bass-glow text-center">
-                        <h1 className="text-2xl font-bold mb-1">ISOPIXEL BKK</h1>
-                        <p className="text-blue-400 text-[10px] tracking-[0.3em] mb-8">PROFESSIONAL PLAYER</p>
-
-                        <div className={`w-48 h-48 mx-auto rounded-full bg-gradient-to-br ${songs[currentTrack].color} flex items-center justify-center shadow-2xl mb-8 ${isPlaying ? 'animate-[pulse_2s_infinite]' : ''}`}>
-                             <div className="bg-black/20 w-40 h-40 rounded-full border-4 border-white/5 flex items-center justify-center">
-                                <span className="text-4xl">🎵</span>
-                             </div>
+                <div className="flex flex-col items-center justify-center min-h-screen p-6">
+                    <div className="glass-morphed w-full max-w-2xl p-10 master-glow relative">
+                        
+                        {/* Player Header */}
+                        <div className="text-center mb-10">
+                            <h1 className="text-4xl font-bold tracking-tight text-white">ISOPIXEL MASTER</h1>
+                            <p className="text-blue-500 text-xs font-bold uppercase tracking-[0.5em] mt-2">Professional Audio Engine</p>
                         </div>
 
-                        <h2 className="text-xl font-bold mb-6">{songs[currentTrack].title}</h2>
+                        {/* Professional Visualizer */}
+                        <div className="flex flex-col items-center mb-12">
+                            <div className={`w-64 h-64 rounded-full bg-gradient-to-br ${songs[currentIndex].color} flex items-center justify-center shadow-2xl transition-all duration-1000 ${isPlaying ? 'scale-105 border-[10px] border-white/10' : 'scale-95 border-[10px] border-white/5'}`}>
+                                <div className={`w-48 h-48 rounded-full border-2 border-white/20 flex items-center justify-center ${isPlaying ? 'rotating' : ''}`}>
+                                    <div className="bg-black/40 w-16 h-16 rounded-full border-4 border-white/10"></div>
+                                </div>
+                            </div>
+                            <h2 className="text-3xl font-bold mt-10 text-white drop-shadow-lg truncate max-w-md">
+                                {songs[currentIndex].title}
+                            </h2>
+                        </div>
 
-                        <div className="flex justify-center gap-6 mb-8">
-                            <button onClick={togglePlay} className="w-20 h-20 bg-blue-600 rounded-full text-3xl shadow-lg hover:scale-105 active:scale-95 transition-all">
-                                {isPlaying ? "⏸" : "▶️"}
+                        {/* Master Controls */}
+                        <div className="flex items-center justify-center gap-12 mb-10">
+                            <button onClick={() => setCurrentIndex((currentIndex - 1 + 15) % 15)} className="text-gray-400 hover:text-white transition-all"><Icons.Prev /></button>
+                            <button onClick={togglePlay} className="w-24 h-24 bg-blue-600 rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(37,99,235,0.4)] hover:bg-blue-500 transition-all active:scale-90">
+                                {isPlaying ? <Icons.Pause /> : <Icons.Play />}
                             </button>
+                            <button onClick={() => setCurrentIndex((currentIndex + 1) % 15)} className="text-gray-400 hover:text-white transition-all"><Icons.Next /></button>
                         </div>
 
-                        <div className="p-4 bg-white/5 rounded-2xl mb-8">
-                            <label className="text-xs text-blue-300 block mb-2">ปรับพลังเบส: {bass} dB</label>
-                            <input type="range" min="0" max="25" value={bass} onChange={e => setBass(e.target.value)} className="w-full h-2 bg-blue-900 rounded-lg appearance-none cursor-pointer" />
+                        {/* Mixer Panel */}
+                        <div className="grid grid-cols-2 gap-8 mb-10 p-6 bg-white/5 rounded-[30px] border border-white/10">
+                            <div className="flex flex-col gap-3">
+                                <div className="flex justify-between text-[10px] font-bold text-blue-400 uppercase tracking-widest">
+                                    <span>Bass Boost</span> <span>{bass} dB</span>
+                                </div>
+                                <input type="range" min="0" max="25" value={bass} onChange={e => setBass(parseInt(e.target.value))} className="w-full" />
+                            </div>
+                            <div className="flex flex-col gap-3">
+                                <div className="flex justify-between text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                    <span>Master Vol</span> <span>{Math.round(volume * 100)}%</span>
+                                </div>
+                                <input type="range" min="0" max="1" step="0.01" value={volume} onChange={e => {
+                                    setVolume(e.target.value);
+                                    audioRef.current.volume = e.target.value;
+                                }} className="w-full" />
+                            </div>
                         </div>
 
-                        <label className="block w-full py-4 border-2 border-dashed border-white/20 rounded-xl cursor-pointer hover:bg-white/5 mb-8">
-                            <span className="text-sm">➕ คลิกอัปโหลดเพลงเพิ่ม (15 เพลง)</span>
-                            <input type="file" multiple accept="audio/*" className="hidden" onChange={handleUpload} />
+                        {/* Upload Zone */}
+                        <label className="flex items-center justify-center gap-4 w-full py-5 mb-10 bg-blue-600/10 border-2 border-dashed border-blue-500/30 rounded-3xl cursor-pointer hover:bg-blue-600/20 transition-all group">
+                            <Icons.Upload />
+                            <span className="text-sm font-bold text-blue-300">ลากไฟล์ลงที่นี่ หรือคลิกเพื่ออัปโหลด (สูงสุด 15 เพลง)</span>
+                            <input type="file" multiple accept="audio/mp3" className="hidden" onChange={handleUpload} />
                         </label>
 
-                        <div className="text-left space-y-2 max-h-60 overflow-y-auto pr-2">
-                            {songs.map((s, i) => (
-                                <div key={i} onClick={() => { if(!s.isEmpty){ setCurrentTrack(i); setIsPlaying(true); }}} 
-                                     className={`p-3 rounded-lg flex justify-between ${currentTrack === i ? 'bg-blue-600' : 'bg-white/5'}`}>
-                                    <span className="text-sm">{s.title}</span>
-                                    {!s.isEmpty && <span className="text-xs opacity-50">READY</span>}
+                        {/* Professional Playlist */}
+                        <div className="playlist-scroll space-y-3 pr-2">
+                            {songs.map((song, index) => (
+                                <div 
+                                    key={song.id} 
+                                    className={`group flex items-center justify-between p-5 rounded-3xl cursor-pointer transition-all ${currentIndex === index ? 'bg-blue-600 shadow-xl' : 'bg-white/5 hover:bg-white/10'}`}
+                                    onClick={() => !song.isEmpty && setCurrentIndex(index)}
+                                >
+                                    <div className="flex items-center gap-5">
+                                        <span className={`text-xs font-bold ${currentIndex === index ? 'text-white' : 'text-gray-600'}`}>
+                                            {song.id < 10 ? `0${song.id}` : song.id}
+                                        </span>
+                                        <span className={`text-sm font-semibold truncate max-w-[200px] ${song.isEmpty ? 'text-gray-700 italic' : ''}`}>
+                                            {song.title}
+                                        </span>
+                                    </div>
+                                    {!song.isEmpty && (
+                                        <div className="flex items-center gap-2">
+                                            <a href={song.file} download={`${song.title}.mp3`} onClick={e => e.stopPropagation()} className="p-2 hover:bg-black/20 rounded-full transition-all" title="ดาวน์โหลด">
+                                                <Icons.Download />
+                                            </a>
+                                            <button onClick={(e) => removeSong(song.id, e)} className="p-2 hover:bg-red-500/20 rounded-full transition-all" title="ลบเพลง">
+                                                <Icons.Delete />
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>
                     </div>
-                    <audio ref={audioRef} src={songs[currentTrack].file} onEnded={() => setCurrentTrack((currentTrack+1)%15)} />
+                    
+                    <audio 
+                        ref={audioRef} 
+                        src={songs[currentIndex].file} 
+                        onEnded={() => setCurrentIndex((currentIndex + 1) % 15)}
+                    />
+                    <footer className="mt-12 opacity-20 text-[10px] uppercase tracking-[0.6em]">ISOPIXEL MASTER CORE v3.0 • BY PROFESSIONAL PROGRAMMER</footer>
                 </div>
             );
         };
@@ -136,3 +223,4 @@
     </script>
 </body>
 </html>
+
