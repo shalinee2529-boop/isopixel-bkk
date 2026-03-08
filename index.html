@@ -36,11 +36,12 @@
 
         const App = () => {
             // --- 1. ส่วนรายชื่อเพลง (เพิ่มให้ครบ 15 เพลงได้ที่นี่) ---
-            const [songs, setSongs] = useState([
-                { id: 1, title: "1. Sodapop Hunter P.1", file: "Sodapop Hunter P.1.mp3", color: "from-pink-500 to-purple-600" },
-                { id: 2, title: "2. สเต็ปจิ๋วไฟลุก", file: "สเต็ปจิ๋วไฟลุก.mp3", color: "from-orange-500 to-red-600" },
-                { id: 3, title: "3. Siam Fighter", file: "Siam Fighter.mp3", color: "from-blue-500 to-cyan-600" },
-                { id: 4, title: "4. Doremi Rainbow", file: "Doremi Rainbow.mp3", color: "from-green-500 to-emerald-600" },
+           const [songs] = useState([
+                { id: 1, title: "1. Sodapop Hunter", file: "soda.mp3", color: "from-pink-500 to-purple-600" },
+                { id: 2, title: "2. สเต็ปจิ๋วไฟลุก", file: "step.mp3", color: "from-orange-500 to-red-600" },
+                { id: 3, title: "3. Siam Fighter", file: "Siam Fighter p6.mp3", color: "from-blue-500 to-cyan-600" },
+                { id: 4, title: "4. Doremi Rainbow", file: "Doremi Rainbow K....mp3", color: "from-green-500 to-emerald-600" }
+            ]);
                 // เพลงที่ 5-15 (ใส่ชื่อไฟล์ให้ตรงกับที่อัปโหลดขึ้น GitHub นะคะ)
                 { id: 5, title: "5. เพลงรอเพิ่ม...", file: "song5.mp3", color: "from-gray-600 to-gray-800" },
                 { id: 6, title: "6. เพลงรอเพิ่ม...", file: "song6.mp3", color: "from-gray-600 to-gray-800" },
@@ -162,3 +163,4 @@
     </script>
 </body>
 </html>
+
